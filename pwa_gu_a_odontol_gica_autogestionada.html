@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mi Consulta Odontológica - Guía Accesible</title>
+    
+    <!-- PWA Web App Manifest -->
+    <link rel="manifest" id="manifest-placeholder">
+    <meta name="theme-color" content="#0d9488">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d9488'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🦷</text></svg>">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a'
+                        },
+                        urgent: '#e11d48',
+                        urgentHover: '#be123c',
+                        warning: '#d97706'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom Styles for High Contrast, Interactive Mouth Map & Mobile Accessibility -->
+    <style>
+        body {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            background-color: #f8fafc;
+        }
+        
+        .tab-active {
+            border-bottom: 4px solid #0d9488;
+            color: #0f766e;
+            font-weight: 800;
+            background-color: #f0fdfa;
+        }
+
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Interactive Tooth Map Styling */
+        .tooth-path {
+            fill: #ffffff;
+            stroke: #334155;
+            stroke-width: 2.2;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tooth-path:hover {
+            fill: #ccfbf1;
+        }
+
+        .tooth-path.selected {
+            fill: #e11d48 !important;
+            stroke: #881337;
+            stroke-width: 3.5;
+            filter: drop-shadow(0px 2px 6px rgba(225, 29, 72, 0.5));
+        }
+
+        .gum-area {
+            fill: #fca5a5;
+            stroke: #e11d48;
+            stroke-width: 1.8;
+            cursor: pointer;
+        }
+
+        .gum-area.selected {
+            fill: #be123c;
+            stroke: #881337;
+        }
+
+        .selection-card {
+            transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .selection-card.active {
+            border-color: #0d9488;
+            background-color: #f0fdfa;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.15);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between max-w-md mx-auto bg-slate-100 shadow-2xl relative pb-20">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white px-4 py-3 border-b border-slate-200 sticky top-0 z-30 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-xl shadow">
+                🦷
+            </div>
+            <div>
+                <h1 class="text-base font-black leading-tight text-slate-800" id="header-title">Mi Dentista</h1>
+                <p class="text-xs font-semibold text-slate-500" id="header-subtitle">Guía Accesible de Dolor</p>
+            </div>
+        </div>
+
+        <!-- Language Switcher & Install Help -->
+        <div class="flex items-center gap-2">
+            <button id="install-btn" onclick="openHostModal()" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs px-2.5 py-1.5 rounded-xl font-extrabold flex items-center gap-1 border border-emerald-300">
+                <span>📲</span> <span id="install-txt">Instalar</span>
+            </button>
+            <button onclick="toggleLanguage()" id="lang-btn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 border border-slate-300" aria-label="Cambiar Idioma">
+                🌐 <span id="lang-label">EN</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="p-3 flex-1 space-y-4">
+
+        <!-- NAV TABS (3 MAIN MODULES) -->
+        <nav class="flex bg-white rounded-2xl p-1 shadow-sm border border-slate-200 text-xs font-bold">
+            <button id="tab-btn-card" onclick="switchTab('card')" class="flex-1 py-2.5 text-center rounded-xl transition-all flex flex-col items-center gap-1 text-slate-600">
+                <span class="text-xl">🪪</span>
+                <span id="tab-label-card">Tarjeta Pass</span>
+            </button>
+            <button id="tab-btn-pain" onclick="switchTab('pain')" class="flex-1 py-2.5 text-center rounded-xl transition-all flex flex-col items-center gap-1 text-slate-600">
+                <span class="text-xl">📍</span>
+                <span id="tab-label-pain">¿Dónde duele?</span>
+            </button>
+            <button id="tab-btn-schedule" onclick="switchTab('schedule')" class="flex-1 py-2.5 text-center rounded-xl transition-all flex flex-col items-center gap-1 text-slate-600">
+                <span class="text-xl">📋</span>
+                <span id="tab-label-schedule">Mi Agenda</span>
+            </button>
+        </nav>
+
+        <!-- MODULE 1: DIGITAL AUTOCONTROL CARD (WALLET PASS STYLE) -->
+        <section id="module-card" class="space-y-4">
+            
+            <!-- Patient Setup Bar -->
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+                <span class="text-2xl">👤</span>
+                <div class="flex-1">
+                    <label for="patient-name" class="block text-xs font-extrabold text-slate-500 uppercase tracking-wider" id="lbl-name">Tu Nombre / Apodo:</label>
+                    <input type="text" id="patient-name" placeholder="Ej. Mateo" oninput="updateName(this.value)" class="w-full text-lg font-black text-slate-800 focus:outline-none border-b-2 border-brand-500 focus:border-brand-700 bg-transparent py-0.5">
+                </div>
+            </div>
+
+            <!-- Lockscreen / Pass Card -->
+            <div class="bg-gradient-to-br from-teal-800 to-brand-900 text-white rounded-3xl p-5 card-shadow space-y-4 border-2 border-brand-500 relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 text-slate-800 opacity-10 text-9xl pointer-events-none">🤚</div>
+
+                <!-- Pass Header -->
+                <div class="flex justify-between items-start border-b border-teal-500/40 pb-3">
+                    <div>
+                        <span class="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider inline-block mb-1" id="pass-tag">Pase de Consulta</span>
+                        <h2 class="text-2xl font-black tracking-wide" id="pass-patient-display">Hola, soy Mateo</h2>
+                    </div>
+                    <button onclick="speakAutocontrolCard()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 p-3 rounded-2xl shadow-lg transition transform active:scale-95 flex items-center justify-center" title="Leer en voz alta" aria-label="Leer en voz alta">
+                        <span class="text-2xl">🔊</span>
+                    </button>
+                </div>
+
+                <!-- Main Message Box -->
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 space-y-3">
+                    <div class="flex items-start gap-3">
+                        <span class="text-3xl">⚠️</span>
+                        <p class="text-lg font-bold leading-snug text-amber-100" id="main-dentist-msg">
+                            Me pongo muy nervioso. Por favor explícame todo antes de tocarme. Si levanto la mano, por favor detente un momento.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Sensory Badges / Needs -->
+                <div class="space-y-2">
+                    <p class="text-xs font-bold uppercase tracking-wider text-teal-200" id="lbl-needs">Mis Necesidades Especiales:</p>
+                    <div class="flex flex-wrap gap-2" id="sensory-badges">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Card Footer / Direct Action -->
+                <div class="pt-2 flex justify-between items-center text-xs text-teal-100 border-t border-teal-500/30">
+                    <span id="pass-footer-hint">📱 Muestra esta pantalla a tu odontólogo</span>
+                    <span class="font-mono text-teal-300">ID: #AUTO-SOPORTE</span>
+                </div>
+            </div>
+
+            <!-- Quick Needs Customizer -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2" id="lbl-customizer">
+                    <span>⚙️</span> Personalizar mi tarjeta:
+                </h3>
+                <div class="grid grid-cols-1 gap-2" id="needs-options">
+                    <!-- Options JS injected -->
+                </div>
+            </div>
+
+            <!-- Audio Readout Button -->
+            <button onclick="speakAutocontrolCard()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-4 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-3 text-base transition active:scale-98">
+                <span class="text-2xl">🔊</span>
+                <span id="btn-read-aloud">Leer mensaje en voz alta</span>
+            </button>
+        </section>
+
+        <!-- MODULE 2: PAIN MAP / DENTAL INDICATOR (SIMPLIFIED SYMPTOMS) -->
+        <section id="module-pain" class="space-y-4 hidden">
+            
+            <!-- Instructions Banner -->
+            <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 flex items-center gap-3">
+                <span class="text-3xl">👇</span>
+                <p class="text-xs font-bold text-amber-900 leading-snug" id="pain-instructions">
+                    Toca el diente o encía que te duele en el dibujo de la boca. Luego elige qué sientes.
+                </p>
+            </div>
+
+            <!-- Interactive Mouth & Teeth SVG Map -->
+            <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center relative">
+                <div class="flex justify-between w-full text-xs font-black text-slate-500 mb-1 px-2">
+                    <span id="lbl-arch-top">ARRIBA (Superior)</span>
+                    <span id="lbl-tap-tooth">Toca para marcar 🔴</span>
+                </div>
+
+                <!-- SVG DENTAL ARCH DIAGRAM -->
+                <svg viewBox="0 0 300 280" class="w-full max-w-[280px] h-auto drop-shadow-sm select-none">
+                    <!-- Upper Gums -->
+                    <path d="M 40 120 C 40 30, 260 30, 260 120 C 260 100, 40 100, 40 120" class="gum-area" id="gum-upper" onclick="selectTooth('Encía Superior', 'gum-upper')"/>
+                    
+                    <!-- Upper Dental Arch Teeth -->
+                    <rect x="42" y="110" width="18" height="22" rx="4" class="tooth-path" id="t-molar-ul2" onclick="selectTooth('Muela Trasera Superior Izquierda', 't-molar-ul2')"/>
+                    <rect x="58" y="92" width="18" height="20" rx="4" class="tooth-path" id="t-molar-ul1" onclick="selectTooth('Muela Superior Izquierda', 't-molar-ul1')"/>
+                    <rect x="76" y="76" width="16" height="18" rx="4" class="tooth-path" id="t-pre-ul" onclick="selectTooth('Premolar Superior Izquierdo', 't-pre-ul')"/>
+                    
+                    <path d="M 94 62 L 108 52 L 118 64 L 102 72 Z" class="tooth-path" id="t-canine-ul" onclick="selectTooth('Colmillo Superior Izquierdo', 't-canine-ul')"/>
+                    <rect x="118" y="46" width="14" height="18" rx="3" class="tooth-path" id="t-inc-ul" onclick="selectTooth('Diente Delantero Superior Izquierdo', 't-inc-ul')"/>
+                    
+                    <rect x="135" y="44" width="15" height="18" rx="3" class="tooth-path" id="t-inc-ur" onclick="selectTooth('Diente Delantero Superior Derecho', 't-inc-ur')"/>
+                    <rect x="153" y="46" width="14" height="18" rx="3" class="tooth-path" id="t-inc-ur2" onclick="selectTooth('Diente Delantero Superior Derecho', 't-inc-ur2')"/>
+                    
+                    <path d="M 170 64 L 180 52 L 194 62 L 182 72 Z" class="tooth-path" id="t-canine-ur" onclick="selectTooth('Colmillo Superior Derecho', 't-canine-ur')"/>
+                    <rect x="194" y="76" width="16" height="18" rx="4" class="tooth-path" id="t-pre-ur" onclick="selectTooth('Premolar Superior Derecho', 't-pre-ur')"/>
+                    <rect x="210" y="92" width="18" height="20" rx="4" class="tooth-path" id="t-molar-ur1" onclick="selectTooth('Muela Superior Derecha', 't-molar-ur1')"/>
+                    <rect x="226" y="110" width="18" height="22" rx="4" class="tooth-path" id="t-molar-ur2" onclick="selectTooth('Muela Trasera Superior Derecha', 't-molar-ur2')"/>
+
+                    <!-- Lower Gums -->
+                    <path d="M 40 160 C 40 250, 260 250, 260 160 C 260 180, 40 180, 40 160" class="gum-area" id="gum-lower" onclick="selectTooth('Encía Inferior', 'gum-lower')"/>
+
+                    <!-- Lower Dental Arch Teeth -->
+                    <rect x="42" y="148" width="18" height="22" rx="4" class="tooth-path" id="t-molar-ll2" onclick="selectTooth('Muela Trasera Inferior Izquierda', 't-molar-ll2')"/>
+                    <rect x="58" y="168" width="18" height="20" rx="4" class="tooth-path" id="t-molar-ll1" onclick="selectTooth('Muela Inferior Izquierda', 't-molar-ll1')"/>
+                    <rect x="76" y="186" width="16" height="18" rx="4" class="tooth-path" id="t-pre-ll" onclick="selectTooth('Premolar Inferior Izquierdo', 't-pre-ll')"/>
+                    
+                    <path d="M 94 218 L 108 228 L 118 216 L 102 208 Z" class="tooth-path" id="t-canine-ll" onclick="selectTooth('Colmillo Inferior Izquierdo', 't-canine-ll')"/>
+                    <rect x="118" y="216" width="14" height="18" rx="3" class="tooth-path" id="t-inc-ll" onclick="selectTooth('Diente Delantero Inferior Izquierdo', 't-inc-ll')"/>
+                    
+                    <rect x="135" y="218" width="15" height="18" rx="3" class="tooth-path" id="t-inc-lr" onclick="selectTooth('Diente Delantero Inferior Derecho', 't-inc-lr')"/>
+                    <rect x="153" y="216" width="14" height="18" rx="3" class="tooth-path" id="t-inc-lr2" onclick="selectTooth('Diente Delantero Inferior Derecho', 't-inc-lr2')"/>
+                    
+                    <path d="M 170 216 L 180 228 L 194 218 L 182 208 Z" class="tooth-path" id="t-canine-lr" onclick="selectTooth('Colmillo Inferior Derecho', 't-canine-lr')"/>
+                    <rect x="194" y="186" width="16" height="18" rx="4" class="tooth-path" id="t-pre-lr" onclick="selectTooth('Premolar Inferior Derecho', 't-pre-lr')"/>
+                    <rect x="210" y="168" width="18" height="20" rx="4" class="tooth-path" id="t-molar-lr1" onclick="selectTooth('Muela Inferior Derecha', 't-molar-lr1')"/>
+                    <rect x="226" y="148" width="18" height="22" rx="4" class="tooth-path" id="t-molar-lr2" onclick="selectTooth('Muela Trasera Inferior Derecha', 't-molar-lr2')"/>
+                </svg>
+
+                <div class="flex justify-between w-full text-xs font-black text-slate-500 mt-1 px-2">
+                    <span id="lbl-arch-bottom">ABAJO (Inferior)</span>
+                    <span id="selected-tooth-badge" class="text-urgent font-black bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                        Ningún diente marcado
+                    </span>
+                </div>
+            </div>
+
+            <!-- PAIN LEVEL SELECTOR WITH ARASAAC PICTOGRAMS -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <h3 class="font-extrabold text-xs uppercase tracking-wider text-slate-500" id="lbl-pain-level-title">
+                    1. ¿Cuánto te duele? (Nivel)
+                </h3>
+                <div class="grid grid-cols-3 gap-2" id="pain-level-options">
+                    <!-- Injected dynamically -->
+                </div>
+            </div>
+
+            <!-- PAIN TYPE SELECTOR (SIMPLIFIED CONCRETE TERMS & PICTOGRAMS) -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <h3 class="font-extrabold text-xs uppercase tracking-wider text-slate-500" id="lbl-pain-type-title">
+                    2. ¿Qué sientes? (Elige lo que más se parece)
+                </h3>
+                <div class="grid grid-cols-1 gap-2.5" id="pain-type-options">
+                    <!-- Injected dynamically -->
+                </div>
+            </div>
+
+            <!-- SUMMARY CARD FOR DENTIST DISPLAY & AUDIO -->
+            <div class="bg-slate-900 text-white p-5 rounded-3xl space-y-4 border-2 border-slate-800 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-xs font-black uppercase tracking-wider text-teal-400" id="lbl-summary-title">Resumen para el Odontólogo</span>
+                    <span class="text-2xl">📋</span>
+                </div>
+
+                <p id="pain-summary-text" class="text-lg font-extrabold leading-relaxed text-amber-200">
+                    Por favor marca un diente y qué sientes para mostrar la indicación aquí.
+                </p>
+
+                <button onclick="speakPainSummary()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-black py-3.5 px-4 rounded-2xl flex items-center justify-center gap-3 text-base shadow-lg transition active:scale-98">
+                    <span class="text-2xl">🔊</span>
+                    <span id="btn-speak-pain">Decir dolor en voz alta</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- MODULE 3: INTERACTIVE ANTICIPATORY SCHEDULE -->
+        <section id="module-schedule" class="space-y-4 hidden">
+            
+            <!-- Progress Bar -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div class="flex justify-between items-center text-sm font-black">
+                    <span class="text-slate-700" id="lbl-progress">Progreso de la Consulta</span>
+                    <span id="progress-text" class="text-brand-700">0%</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-brand-500 h-3.5 rounded-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <!-- Step List -->
+            <div class="space-y-3" id="schedule-steps-container">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Reset Button -->
+            <button onclick="resetSchedule()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold py-3.5 rounded-2xl transition text-sm flex items-center justify-center gap-2">
+                <span>🔄</span> <span id="btn-reset-steps">Reiniciar Lista de Pasos</span>
+            </button>
+        </section>
+
+        <!-- HOSTING & INSTALLATION MODAL / GUIDE -->
+        <section id="hosting-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="font-black text-lg text-slate-800 flex items-center gap-2">
+                        <span>🚀</span> <span id="modal-title">Cómo Usar e Instalar</span>
+                    </h3>
+                    <button onclick="closeHostModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-black">&times;</button>
+                </div>
+
+                <div class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                    <div class="bg-teal-50 p-3.5 rounded-2xl border border-teal-200">
+                        <p class="font-black text-brand-800 mb-1" id="m-step1-title">📱 Instalación en Smartphone:</p>
+                        <p id="m-step1-desc">Abre esta página en Chrome o Safari desde tu teléfono y selecciona <strong>"Agregar a la pantalla de inicio"</strong> o <strong>"Instalar App"</strong>.</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                        <p class="font-black text-slate-800" id="m-step2-title">🌐 Dónde alojar esta app gratis:</p>
+                        <ul class="list-disc pl-5 space-y-1 text-xs font-semibold">
+                            <li><strong>GitHub Pages:</strong> Sube este archivo HTML como `index.html` a un repositorio público.</li>
+                            <li><strong>Vercel / Netlify:</strong> Arrastra la carpeta con este archivo para obtener un enlace público de inmediato.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button onclick="closeHostModal()" class="w-full bg-brand-600 text-white font-black py-3 rounded-2xl text-center">
+                    Entendido / Ready
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER NAV / INFO -->
+    <footer class="bg-white border-t border-slate-200 p-3 text-center text-xs text-slate-500 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-20 flex justify-between items-center px-4">
+        <span id="footer-pictograms">Pictogramas simples y accesibles</span>
+        <button onclick="openHostModal()" class="text-brand-700 font-extrabold underline" id="footer-host-btn">¿Cómo alojar/instalar?</button>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA & TRANSLATIONS ---
+        let currentLang = 'es';
+
+        const translations = {
+            es: {
+                title: "Mi Dentista",
+                subtitle: "Guía Accesible de Dolor",
+                install: "Instalar",
+                passTab: "Tarjeta Pass",
+                painTab: "¿Dónde duele?",
+                scheduleTab: "Mi Agenda",
+                nameLabel: "Tu Nombre / Apodo:",
+                passTag: "Pase de Consulta",
+                passDefaultName: "Hola, soy Mateo",
+                mainMsg: "Me pongo muy nervioso. Por favor explícame todo antes de tocarme. Si levanto la mano, por favor detente un momento.",
+                needsLabel: "Mis Necesidades Especiales:",
+                passFooterHint: "📱 Muestra esta pantalla a tu odontólogo",
+                customizerTitle: "Personalizar mi tarjeta:",
+                readAloud: "Leer mensaje en voz alta",
+                progressLabel: "Progreso de la Consulta",
+                resetSteps: "Reiniciar Lista de Pasos",
+                hostBtn: "¿Cómo alojar/instalar?",
+                modalTitle: "Instalación y Hosting",
+                modalStep1Title: "📱 Instalación en Smartphone:",
+                modalStep1Desc: "Abre esta página en Chrome o Safari desde tu teléfono y selecciona 'Agregar a la pantalla de inicio' o 'Instalar App'.",
+                modalStep2Title: "🌐 Dónde alojar esta app gratis:",
+                pictogramNotice: "Diseñado para máxima accesibilidad cognitiva.",
+
+                // Pain Module Translations
+                painInstructions: "Toca el diente o encía que te duele en el dibujo de la boca. Luego elige qué sientes.",
+                archTop: "ARRIBA (Superior)",
+                archBottom: "ABAJO (Inferior)",
+                tapTooth: "Toca para marcar 🔴",
+                noToothSelected: "Ningún diente marcado",
+                painLevelTitle: "1. ¿Cuánto te duele? (Nivel)",
+                painTypeTitle: "2. ¿Qué sientes? (Elige lo que más se parece)",
+                summaryTitle: "Resumen para el Odontólogo",
+                speakPain: "Decir dolor en voz alta",
+                summaryPlaceholder: "Por favor marca un diente y qué sientes para mostrar la indicación aquí.",
+                
+                painLevels: [
+                    { id: 'low', label: 'Un poco', pictogram: '🙂', color: 'border-emerald-300' },
+                    { id: 'medium', label: 'Bastante', pictogram: '😐', color: 'border-amber-300' },
+                    { id: 'high', label: 'Muchísimo', pictogram: '😫', color: 'border-rose-400' }
+                ],
+                // Ultra-simplified pain types with concrete everyday visual pictograms
+                painTypes: [
+                    { 
+                        id: 'eat', 
+                        label: 'Me duele al comer o morder', 
+                        svg: `<svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-2h2zm0-4h-2V7h2z"/></svg>`, 
+                        icon: '🍎' 
+                    },
+                    { 
+                        id: 'temperature', 
+                        label: 'Me duele al tomar algo frío o caliente', 
+                        icon: '❄️☕' 
+                    },
+                    { 
+                        id: 'throb', 
+                        label: 'Siento pinchazos o que me late el diente', 
+                        icon: '💥📌' 
+                    },
+                    { 
+                        id: 'gum', 
+                        label: 'Me duele la encía / Me sale sangre', 
+                        icon: '🩸👄' 
+                    },
+                    { 
+                        id: 'constant', 
+                        label: 'Me duele todo el tiempo sin parar', 
+                        icon: '⏰😫' 
+                    }
+                ],
+
+                needs: [
+                    { id: 'sound', label: '🔊 Sensible a ruidos fuertes', active: true },
+                    { id: 'light', label: '💡 Sensible a la luz potente', active: true },
+                    { id: 'pause', label: '⏱️ Necesito pausas frecuentes', active: false },
+                    { id: 'touch', label: '🤝 Por favor, avísame antes de tocarme', active: true }
+                ],
+                steps: [
+                    {
+                        id: 1,
+                        title: "1. Llegada y Sala de Espera",
+                        desc: "Llegamos a la clínica. Nos anunciamos y esperamos sentados hasta que nos llamen.",
+                        pictogram: "🛋️",
+                        alarmText: "Alerta: Pronto será tu turno. Respira con calma."
+                    },
+                    {
+                        id: 2,
+                        title: "2. Sentarse en el Sillón",
+                        desc: "Entramos al consultorio y nos sentamos en el sillón grande que se reclinará suavemente.",
+                        pictogram: "🪑",
+                        alarmText: "El sillón se reclinará. Estás seguro/a."
+                    },
+                    {
+                        id: 3,
+                        title: "3. Revisión con Espejo y Luz",
+                        desc: "El dentista encenderá una luz brillante y usará un espejito pequeño para mirar tus dientes.",
+                        pictogram: "🔍",
+                        alarmText: "Solo van a mirar tus dientes con un espejito."
+                    },
+                    {
+                        id: 4,
+                        title: "4. Limpieza / Agua y Aspirador",
+                        desc: "Usarán un instrumento que echa agua y un tubito suave que aspira el agua de tu boca.",
+                        pictogram: "💧",
+                        alarmText: "Escucharás un ruido de agua y aspirador."
+                    },
+                    {
+                        id: 5,
+                        title: "5. Fin de la Consulta",
+                        desc: "¡Terminamos! El dentista te felicita, nos levantamos y podemos volver a casa.",
+                        pictogram: "🌟",
+                        alarmText: "¡Excelente trabajo! La consulta ha terminado."
+                    }
+                ]
+            },
+            en: {
+                title: "My Dentist",
+                subtitle: "Accessible Pain Guide",
+                install: "Install",
+                passTab: "Pass Card",
+                painTab: "Pain Map",
+                scheduleTab: "My Schedule",
+                nameLabel: "Your Name / Nickname:",
+                passTag: "Consultation Pass",
+                passDefaultName: "Hello, I am Mateo",
+                mainMsg: "I get very nervous. Please explain everything before touching me. If I raise my hand, please pause for a moment.",
+                needsLabel: "My Special Needs:",
+                passFooterHint: "📱 Show this screen directly to your dentist",
+                customizerTitle: "Customize my card:",
+                readAloud: "Read message out loud",
+                progressLabel: "Consultation Progress",
+                resetSteps: "Reset Step Checklist",
+                hostBtn: "How to host/install?",
+                modalTitle: "Installation & Hosting",
+                modalStep1Title: "📱 Installation on Smartphone:",
+                modalStep1Desc: "Open this page in Chrome or Safari on your phone and tap 'Add to Home Screen' or 'Install App'.",
+                modalStep2Title: "🌐 Where to host for free:",
+                pictogramNotice: "Designed for maximum cognitive accessibility.",
+
+                // Pain Module Translations EN
+                painInstructions: "Tap the tooth or gum that hurts on the mouth diagram. Then choose what you feel.",
+                archTop: "TOP (Upper)",
+                archBottom: "BOTTOM (Lower)",
+                tapTooth: "Tap to select 🔴",
+                noToothSelected: "No tooth selected",
+                painLevelTitle: "1. How much does it hurt? (Level)",
+                painTypeTitle: "2. What do you feel? (Choose best match)",
+                summaryTitle: "Summary for Dentist",
+                speakPain: "Say pain details out loud",
+                summaryPlaceholder: "Please select a tooth and what you feel to show the summary here.",
+
+                painLevels: [
+                    { id: 'low', label: 'A little', pictogram: '🙂', color: 'border-emerald-300' },
+                    { id: 'medium', label: 'Medium', pictogram: '😐', color: 'border-amber-300' },
+                    { id: 'high', label: 'A lot', pictogram: '😫', color: 'border-rose-400' }
+                ],
+                painTypes: [
+                    { 
+                        id: 'eat', 
+                        label: 'It hurts when eating or biting', 
+                        icon: '🍎' 
+                    },
+                    { 
+                        id: 'temperature', 
+                        label: 'It hurts with hot or cold drinks', 
+                        icon: '❄️☕' 
+                    },
+                    { 
+                        id: 'throb', 
+                        label: 'I feel sharp pinches or throbbing', 
+                        icon: '💥📌' 
+                    },
+                    { 
+                        id: 'gum', 
+                        label: 'My gum hurts / Bleeding gum', 
+                        icon: '🩸👄' 
+                    },
+                    { 
+                        id: 'constant', 
+                        label: 'It hurts all the time without stopping', 
+                        icon: '⏰😫' 
+                    }
+                ],
+
+                needs: [
+                    { id: 'sound', label: '🔊 Sensitive to loud noises', active: true },
+                    { id: 'light', label: '💡 Sensitive to bright lights', active: true },
+                    { id: 'pause', label: '⏱️ I need frequent breaks', active: false },
+                    { id: 'touch', label: '🤝 Please warn me before touching', active: true }
+                ],
+                steps: [
+                    {
+                        id: 1,
+                        title: "1. Arrival & Waiting Room",
+                        desc: "We arrive at the clinic, check in, and wait calmly until called.",
+                        pictogram: "🛋️",
+                        alarmText: "Reminder: It will be your turn soon. Take a deep breath."
+                    },
+                    {
+                        id: 2,
+                        title: "2. Sitting in the Chair",
+                        desc: "We enter the room and sit in the big chair that gently reclines.",
+                        pictogram: "🪑",
+                        alarmText: "The chair is going to recline. You are safe."
+                    },
+                    {
+                        id: 3,
+                        title: "3. Check-up with Mirror & Light",
+                        desc: "The dentist turns on a light and uses a tiny mirror to check your teeth.",
+                        pictogram: "🔍",
+                        alarmText: "They will only look at your teeth with a small mirror."
+                    },
+                    {
+                        id: 4,
+                        title: "4. Cleaning / Water & Suction",
+                        desc: "They will use a tool with water and a soft suction tube inside your mouth.",
+                        pictogram: "💧",
+                        alarmText: "You will hear water and suction sounds."
+                    },
+                    {
+                        id: 5,
+                        title: "5. Consultation Finished",
+                        desc: "All done! The dentist congratulates you, and we can go home.",
+                        pictogram: "🌟",
+                        alarmText: "Great job! The appointment is finished."
+                    }
+                ]
+            }
+        };
+
+        // Persistent State
+        let state = {
+            patientName: localStorage.getItem('pwa_patient_name') || 'Mateo',
+            completedSteps: JSON.parse(localStorage.getItem('pwa_completed_steps') || '[]'),
+            needs: JSON.parse(localStorage.getItem('pwa_needs') || 'null'),
+            selectedTooth: null,
+            selectedToothElemId: null,
+            selectedPainLevel: null,
+            selectedPainType: null
+        };
+
+        if (!state.needs) {
+            state.needs = translations.es.needs;
+        }
+
+        // --- CORE INITIALIZATION ---
+
+        function initApp() {
+            setupManifest();
+            document.getElementById('patient-name').value = state.patientName;
+            renderUI();
+            registerServiceWorker();
+        }
+
+        function renderUI() {
+            const lang = translations[currentLang];
+
+            // Header & Navigation
+            document.getElementById('header-title').textContent = lang.title;
+            document.getElementById('header-subtitle').textContent = lang.subtitle;
+            document.getElementById('lang-label').textContent = currentLang === 'es' ? 'EN' : 'ES';
+            document.getElementById('tab-label-card').textContent = lang.passTab;
+            document.getElementById('tab-label-pain').textContent = lang.painTab;
+            document.getElementById('tab-label-schedule').textContent = lang.scheduleTab;
+            document.getElementById('install-txt').textContent = lang.install;
+
+            // Module 1: Card
+            document.getElementById('lbl-name').textContent = lang.nameLabel;
+            document.getElementById('pass-tag').textContent = lang.passTag;
+            document.getElementById('pass-patient-display').textContent = state.patientName ? `${currentLang === 'es' ? 'Hola, soy' : 'Hello, I am'} ${state.patientName}` : lang.passDefaultName;
+            document.getElementById('main-dentist-msg').textContent = lang.mainMsg;
+            document.getElementById('lbl-needs').textContent = lang.needsLabel;
+            document.getElementById('pass-footer-hint').textContent = lang.passFooterHint;
+            document.getElementById('lbl-customizer').textContent = lang.customizerTitle;
+            document.getElementById('btn-read-aloud').textContent = lang.readAloud;
+
+            // Module 2: Pain Map
+            document.getElementById('pain-instructions').textContent = lang.painInstructions;
+            document.getElementById('lbl-arch-top').textContent = lang.archTop;
+            document.getElementById('lbl-arch-bottom').textContent = lang.archBottom;
+            document.getElementById('lbl-tap-tooth').textContent = lang.tapTooth;
+            document.getElementById('lbl-pain-level-title').textContent = lang.painLevelTitle;
+            document.getElementById('lbl-pain-type-title').textContent = lang.painTypeTitle;
+            document.getElementById('lbl-summary-title').textContent = lang.summaryTitle;
+            document.getElementById('btn-speak-pain').textContent = lang.speakPain;
+
+            // Module 3: Schedule
+            document.getElementById('lbl-progress').textContent = lang.progressLabel;
+            document.getElementById('btn-reset-steps').textContent = lang.resetSteps;
+            document.getElementById('footer-pictograms').textContent = lang.pictogramNotice;
+            document.getElementById('footer-host-btn').textContent = lang.hostBtn;
+
+            // Modal
+            document.getElementById('modal-title').textContent = lang.modalTitle;
+            document.getElementById('m-step1-title').textContent = lang.modalStep1Title;
+            document.getElementById('m-step1-desc').textContent = lang.modalStep1Desc;
+            document.getElementById('m-step2-title').textContent = lang.modalStep2Title;
+
+            renderNeeds();
+            renderPainSelectors();
+            renderScheduleSteps();
+            updateProgressBar();
+            updatePainSummary();
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'es' ? 'en' : 'es';
+            const newNeeds = translations[currentLang].needs;
+            state.needs = newNeeds.map((item, idx) => ({
+                ...item,
+                active: state.needs[idx] ? state.needs[idx].active : item.active
+            }));
+            saveState();
+            renderUI();
+        }
+
+        function updateName(name) {
+            state.patientName = name.trim();
+            saveState();
+            const prefix = currentLang === 'es' ? 'Hola, soy' : 'Hello, I am';
+            document.getElementById('pass-patient-display').textContent = state.patientName ? `${prefix} ${state.patientName}` : translations[currentLang].passDefaultName;
+            updatePainSummary();
+        }
+
+        function switchTab(tab) {
+            const cardModule = document.getElementById('module-card');
+            const painModule = document.getElementById('module-pain');
+            const scheduleModule = document.getElementById('module-schedule');
+
+            const cardBtn = document.getElementById('tab-btn-card');
+            const painBtn = document.getElementById('tab-btn-pain');
+            const scheduleBtn = document.getElementById('tab-btn-schedule');
+
+            [cardModule, painModule, scheduleModule].forEach(m => m.classList.add('hidden'));
+            [cardBtn, painBtn, scheduleBtn].forEach(b => b.classList.remove('tab-active'));
+
+            if (tab === 'card') {
+                cardModule.classList.remove('hidden');
+                cardBtn.classList.add('tab-active');
+            } else if (tab === 'pain') {
+                painModule.classList.remove('hidden');
+                painBtn.classList.add('tab-active');
+            } else {
+                scheduleModule.classList.remove('hidden');
+                scheduleBtn.classList.add('tab-active');
+            }
+        }
+
+        // --- PAIN MAP LOGIC ---
+
+        function selectTooth(toothName, elementId) {
+            if (state.selectedToothElemId) {
+                const prevElem = document.getElementById(state.selectedToothElemId);
+                if (prevElem) prevElem.classList.remove('selected');
+            }
+
+            state.selectedTooth = toothName;
+            state.selectedToothElemId = elementId;
+
+            const elem = document.getElementById(elementId);
+            if (elem) elem.classList.add('selected');
+
+            document.getElementById('selected-tooth-badge').textContent = toothName;
+            updatePainSummary();
+        }
+
+        function renderPainSelectors() {
+            const levelsContainer = document.getElementById('pain-level-options');
+            const typesContainer = document.getElementById('pain-type-options');
+
+            levelsContainer.innerHTML = '';
+            typesContainer.innerHTML = '';
+
+            // Pain Levels
+            translations[currentLang].painLevels.forEach(lvl => {
+                const isSelected = state.selectedPainLevel && state.selectedPainLevel.id === lvl.id;
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.onclick = () => {
+                    state.selectedPainLevel = lvl;
+                    renderPainSelectors();
+                    updatePainSummary();
+                };
+                card.className = `selection-card border-2 p-3 rounded-2xl flex flex-col items-center justify-center gap-1 ${lvl.color} ${isSelected ? 'active ring-2 ring-brand-500' : 'bg-slate-50'}`;
+                card.innerHTML = `
+                    <span class="text-3xl">${lvl.pictogram}</span>
+                    <span class="text-xs font-black text-slate-800 text-center">${lvl.label}</span>
+                `;
+                levelsContainer.appendChild(card);
+            });
+
+            // Pain Types (Ultra-Simple Terms + Concrete Pictograms)
+            translations[currentLang].painTypes.forEach(type => {
+                const isSelected = state.selectedPainType && state.selectedPainType.id === type.id;
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.onclick = () => {
+                    state.selectedPainType = type;
+                    renderPainSelectors();
+                    updatePainSummary();
+                };
+                card.className = `selection-card border-2 p-3 rounded-2xl flex items-center gap-3 text-left border-slate-200 ${isSelected ? 'active ring-2 ring-brand-500' : 'bg-slate-50'}`;
+                card.innerHTML = `
+                    <div class="text-2xl bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex-shrink-0">
+                        ${type.icon}
+                    </div>
+                    <span class="text-xs font-black text-slate-800 leading-snug">${type.label}</span>
+                `;
+                typesContainer.appendChild(card);
+            });
+        }
+
+        function updatePainSummary() {
+            const summaryElem = document.getElementById('pain-summary-text');
+            const name = state.patientName || (currentLang === 'es' ? 'El paciente' : 'The patient');
+
+            if (!state.selectedTooth && !state.selectedPainLevel && !state.selectedPainType) {
+                summaryElem.textContent = translations[currentLang].summaryPlaceholder;
+                return;
+            }
+
+            let text = "";
+            if (currentLang === 'es') {
+                text = `Hola, soy ${name}. `;
+                if (state.selectedTooth) text += `Me duele en: ${state.selectedTooth}. `;
+                if (state.selectedPainLevel) text += `Nivel de dolor: ${state.selectedPainLevel.label}. `;
+                if (state.selectedPainType) text += `Siento que: ${state.selectedPainType.label}.`;
+            } else {
+                text = `Hello, I am ${name}. `;
+                if (state.selectedTooth) text += `Pain located at: ${state.selectedTooth}. `;
+                if (state.selectedPainLevel) text += `Pain level: ${state.selectedPainLevel.label}. `;
+                if (state.selectedPainType) text += `Sensation: ${state.selectedPainType.label}.`;
+            }
+
+            summaryElem.textContent = text;
+        }
+
+        function speakPainSummary() {
+            const text = document.getElementById('pain-summary-text').textContent;
+            speakText(text);
+        }
+
+        // --- SENSORY NEEDS LOGIC ---
+
+        function renderNeeds() {
+            const badgesContainer = document.getElementById('sensory-badges');
+            const optionsContainer = document.getElementById('needs-options');
+
+            badgesContainer.innerHTML = '';
+            optionsContainer.innerHTML = '';
+
+            state.needs.forEach((need, index) => {
+                if (need.active) {
+                    const badge = document.createElement('span');
+                    badge.className = 'bg-white/20 text-white text-xs px-2.5 py-1 rounded-xl font-bold border border-white/30 backdrop-blur-sm flex items-center gap-1';
+                    badge.textContent = need.label;
+                    badgesContainer.appendChild(badge);
+                }
+
+                const opt = document.createElement('label');
+                opt.className = 'flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition';
+                opt.innerHTML = `
+                    <span class="text-xs font-extrabold text-slate-700">${need.label}</span>
+                    <input type="checkbox" ${need.active ? 'checked' : ''} onchange="toggleNeed(${index})" class="w-5 h-5 accent-brand-600 rounded">
+                `;
+                optionsContainer.appendChild(opt);
+            });
+        }
+
+        function toggleNeed(index) {
+            state.needs[index].active = !state.needs[index].active;
+            saveState();
+            renderNeeds();
+        }
+
+        // --- SCHEDULE LOGIC ---
+
+        function renderScheduleSteps() {
+            const container = document.getElementById('schedule-steps-container');
+            container.innerHTML = '';
+
+            const langSteps = translations[currentLang].steps;
+
+            langSteps.forEach(step => {
+                const isCompleted = state.completedSteps.includes(step.id);
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition-all shadow-sm ${
+                    isCompleted 
+                        ? 'bg-emerald-50 border-emerald-300 opacity-90' 
+                        : 'bg-white border-slate-200 hover:border-brand-300'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="text-3xl bg-slate-100 p-2.5 rounded-2xl border border-slate-200 flex-shrink-0">
+                                ${step.pictogram}
+                            </div>
+                            <div>
+                                <h4 class="font-black text-slate-800 text-base leading-snug">${step.title}</h4>
+                                <p class="text-xs font-semibold text-slate-600 mt-1">${step.desc}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between gap-2">
+                        <button onclick="toggleStep(${step.id})" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
+                            isCompleted 
+                                ? 'bg-emerald-600 text-white' 
+                                : 'bg-brand-50 text-brand-800 hover:bg-brand-100 border border-brand-200'
+                        }">
+                            <span>${isCompleted ? '✓' : '◯'}</span>
+                            <span>${isCompleted ? (currentLang === 'es' ? 'Completado' : 'Completed') : (currentLang === 'es' ? 'Marcar paso' : 'Mark Done')}</span>
+                        </button>
+
+                        <button onclick="speakText('${step.title}. ${step.desc}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2.5 rounded-xl text-xs font-bold" title="Escuchar audio">
+                            🔊
+                        </button>
+
+                        <button onclick="triggerStepAlarm('${step.alarmText}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 p-2.5 rounded-xl text-xs font-bold flex items-center gap-1 border border-amber-300" title="Simular Recordatorio">
+                            ⏰
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleStep(id) {
+            const index = state.completedSteps.indexOf(id);
+            if (index > -1) {
+                state.completedSteps.splice(index, 1);
+            } else {
+                state.completedSteps.push(id);
+            }
+            saveState();
+            renderScheduleSteps();
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const total = translations[currentLang].steps.length;
+            const completed = state.completedSteps.length;
+            const percentage = Math.round((completed / total) * 100);
+
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = `${percentage}%`;
+        }
+
+        function resetSchedule() {
+            state.completedSteps = [];
+            saveState();
+            renderScheduleSteps();
+            updateProgressBar();
+        }
+
+        function triggerStepAlarm(msg) {
+            speakText(msg);
+            showNotificationToast(msg);
+        }
+
+        function showNotificationToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-16 left-4 right-4 max-w-md mx-auto bg-amber-500 text-white font-black p-3.5 rounded-2xl shadow-2xl z-50 flex items-center justify-between text-sm animate-bounce';
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🔔</span>
+                    <span>${msg}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white text-xl font-black pl-2">&times;</button>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 5000);
+        }
+
+        // --- AUDIO / SPEECH API ---
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert(currentLang === 'es' ? 'Tu navegador no soporta lectura de voz.' : 'Text-to-speech not supported in this browser.');
+            }
+        }
+
+        function speakAutocontrolCard() {
+            const name = state.patientName || (currentLang === 'es' ? 'Mateo' : 'Matthew');
+            const mainMsg = translations[currentLang].mainMsg;
+            const activeNeeds = state.needs.filter(n => n.active).map(n => n.label).join('. ');
+            const fullText = `${currentLang === 'es' ? 'Hola, soy' : 'Hello, I am'} ${name}. ${mainMsg} ${activeNeeds ? (currentLang === 'es' ? 'Mis necesidades son: ' : 'My needs are: ') + activeNeeds : ''}`;
+            speakText(fullText);
+        }
+
+        // --- PERSISTENCE ---
+
+        function saveState() {
+            localStorage.setItem('pwa_patient_name', state.patientName);
+            localStorage.setItem('pwa_completed_steps', JSON.stringify(state.completedSteps));
+            localStorage.setItem('pwa_needs', JSON.stringify(state.needs));
+        }
+
+        // --- MODAL & PWA SETUP ---
+
+        function openHostModal() {
+            document.getElementById('hosting-modal').classList.remove('hidden');
+        }
+
+        function closeHostModal() {
+            document.getElementById('hosting-modal').classList.add('hidden');
+        }
+
+        function setupManifest() {
+            const myManifest = {
+                "name": "Guía Consulta Odontológica",
+                "short_name": "Mi Dentista",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#f8fafc",
+                "theme_color": "#0d9488",
+                "description": "Herramienta accesible e inclusiva para consultas odontológicas.",
+                "icons": [{
+                    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230d9488'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🦷</text></svg>",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                }]
+            };
+            const stringManifest = JSON.stringify(myManifest);
+            const blob = new Blob([stringManifest], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(blob);
+            document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+        }
+
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            }
+        }
+
+        // --- INITIALIZATION ON LOAD ---
+        window.onload = function() {
+            initApp();
+            switchTab('card');
+        };
+    </script>
+</body>
+</html>
